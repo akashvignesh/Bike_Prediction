@@ -1,70 +1,58 @@
 import os
 import streamlit as st
-import pandas as pd
-import plotly.express as px
-import hopsworks
-
-# Page config
-st.set_page_config(page_title="MAE Viewer", layout="wide")
-st.title("📉 Mean Absolute Error (MAE) - Bike Ride Prediction")
-
-# Hopsworks login
+import mlflow
+from mlflow.tracking import MlflowClient
 from dotenv import load_dotenv
 
+# Load .env vars
 load_dotenv()
-project = hopsworks.login(
-    project=os.getenv("HOPSWORKS_PROJECT_NAME"),
-    api_key_value=os.getenv("HOPSWORKS_API_KEY")
-)
-fs = project.get_feature_store()
+MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI2")
 
-# Get feature groups
-actual_fg = fs.get_feature_group(
-    name=os.getenv("FEATURE_GROUP_NAME"),
-    version=int(os.getenv("FEATURE_GROUP_VERSION", "1"))
-)
+# Set MLflow tracking URI
+mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+client = MlflowClient()
 
-pred_fg = fs.get_feature_group(
-    name="bike_demand_predictions",
-    version=1
-)
+st.title("🚀 MLflow Experiment Dashboard")
 
-# Load data
-actual_df = actual_fg.read()
-actual_df["pickup_hour"] = pd.to_datetime(actual_df["pickup_hour"], utc=True)
-pred_df = pred_fg.read()
-pred_df["pickup_hour"] = pd.to_datetime(pred_df["pickup_hour"], utc=True)
+# Sidebar: Choose experiment
+experiments = client.search_experiments()
 
-# Filter for required columns
-actual_df = actual_df[["pickup_hour", "location_id", "target"]]
-pred_df = pred_df[["pickup_hour", "location_id", "predicted_rides"]]
+experiment_names = [exp.name for exp in experiments]
+selected_exp_name = st.sidebar.selectbox("Select Experiment", experiment_names)
 
-# Sidebar: Location filter
-all_locations = sorted(set(actual_df["location_id"]).union(pred_df["location_id"]))
-selected_location = st.sidebar.selectbox("Select Location ID", all_locations)
+# Get experiment ID
+experiment = client.get_experiment_by_name(selected_exp_name)
+if not experiment:
+    st.error("Experiment not found.")
+    st.stop()
 
-# Filter by location
-actual_filtered = actual_df[actual_df["location_id"] == selected_location]
-pred_filtered = pred_df[pred_df["location_id"] == selected_location]
+# Get runs
+runs = client.search_runs(experiment_ids=[experiment.experiment_id], order_by=["attributes.start_time DESC"])
 
-# Merge actual and predicted
-merged = pd.merge(actual_filtered, pred_filtered, on=["pickup_hour", "location_id"], how="inner")
-merged["absolute_error"] = abs(merged["target"] - merged["predicted_rides"])
+if not runs:
+    st.info("No runs found for this experiment.")
+    st.stop()
 
-# Group by pickup_hour to get MAE over time
-mae_by_hour = merged.groupby("pickup_hour")["absolute_error"].mean().reset_index()
-mae_by_hour.rename(columns={"absolute_error": "MAE"}, inplace=True)
+# Table of metrics
+st.subheader(f"📊 Runs for '{selected_exp_name}'")
+run_table = []
 
-# Plot MAE
-fig = px.line(
-    mae_by_hour,
-    x="pickup_hour",
-    y="MAE",
-    title=f"MAE Over Time for Location {selected_location}",
-    labels={"pickup_hour": "Pickup Hour", "MAE": "Mean Absolute Error"},
-    markers=True
-)
+for run in runs:
+    metrics = run.data.metrics
+    run_table.append({
+        "Run ID": run.info.run_id,
+        "MAE": metrics.get("mean_absolute_error"),
+        "MAPE": metrics.get("mape"),
+        "RMSE": metrics.get("rmse"),
+        "R²": metrics.get("r2"),
+    })
 
-# Display
-st.plotly_chart(fig, use_container_width=True)
-st.metric("📌 Average MAE", round(mae_by_hour["MAE"].mean(), 2))
+st.dataframe(run_table)
+
+# Optionally visualize one run
+st.subheader("🔍 Inspect a Run")
+selected_run_id = st.selectbox("Select Run ID", [r["Run ID"] for r in run_table])
+
+if selected_run_id:
+    run = client.get_run(selected_run_id)
+    st.write("📐 Metrics", run.data.metrics)

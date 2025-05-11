@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 # Step 1: Download raw data for April 2025
 def download_citibike_data(year, month):
     month_str = f"{month:02d}"
-    url = f"https://s3.amazonaws.com/tripdata/{year}{month_str}-citibike-tripdata.csv.zip"
+    url = f"https://s3.amazonaws.com/tripdata/{year}{month_str}-citibike-tripdata.zip"
     zip_file_path = os.path.join("raw_data", "flow", f"{year}{month_str}-citibike-tripdata.csv.zip")
     
     os.makedirs(os.path.dirname(zip_file_path), exist_ok=True)

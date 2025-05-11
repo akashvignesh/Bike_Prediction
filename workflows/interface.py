@@ -4,25 +4,27 @@ from datetime import timedelta
 from pathlib import Path
 import joblib
 import hopsworks
-from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
 
 # Login to Hopsworks and initialize feature store
 def get_hopsworks_project():
     return hopsworks.login(
-        project=os.getenv("HOPSWORKS_PROJECT_NAME"),
-        api_key_value=os.getenv("HOPSWORKS_API_KEY")
+        project="s3akash",
+        api_key_value="LVmrhMHM87zqUPpc.KSnbzXbEPo0sGiqmKTuKbWtM6dNDJAGRCLURFm8tiJF75xz1ye4kNy6d3zP8mQjR"
     )
 
+FEATURE_GROUP_NAME = "time_series_six_hourly_feature_group_bike"
+FEATURE_GROUP_VERSION = 1
+
+FEATURE_VIEW_NAME = "time_series_six_hourly_feature_view_bike"
+FEATURE_VIEW_VERSION = 1
 project = get_hopsworks_project()
 feature_store = project.get_feature_store()
 
 # Get or create feature group
 feature_group = feature_store.get_or_create_feature_group(
-    name=os.getenv("FEATURE_GROUP_NAME"),
-    version=int(os.getenv("FEATURE_GROUP_VERSION")),
+    name=FEATURE_GROUP_NAME,
+    version=FEATURE_GROUP_VERSION,
     description="Time-series Data for Bike at six hour frequency",
     primary_key=["location_id", "pickup_hour"],
     event_time="pickup_hour"
@@ -31,8 +33,8 @@ feature_group = feature_store.get_or_create_feature_group(
 # Create or retrieve feature view
 try:
     feature_view = feature_store.create_feature_view(
-        name=os.getenv('FEATURE_VIEW_NAME'),
-        version=int(os.getenv('FEATURE_VIEW_VERSION')),
+        name=FEATURE_VIEW_NAME,
+        version=FEATURE_VIEW_VERSION,
         query=feature_group.select_all(),
     )
     print(f"Feature view '{os.getenv('FEATURE_VIEW_NAME')}' (version {os.getenv('FEATURE_VIEW_VERSION')}) created successfully.")
@@ -40,10 +42,10 @@ except Exception as e:
     print(f"Feature view creation failed, attempting to retrieve: {e}")
     try:
         feature_view = feature_store.get_feature_view(
-            name=os.getenv('FEATURE_VIEW_NAME'),
-            version=int(os.getenv('FEATURE_VIEW_VERSION')),
+            name=FEATURE_VIEW_NAME,
+            version=FEATURE_VIEW_VERSION,
         )
-        print(f"Feature view '{os.getenv('FEATURE_VIEW_NAME')}' (version {os.getenv('FEATURE_VIEW_VERSION')}) retrieved successfully.")
+        print(f"Feature view '{FEATURE_VIEW_NAME}' (version {FEATURE_VIEW_VERSION}) retrieved successfully.")
     except Exception as e:
         print(f"Error retrieving feature view: {e}")
         exit(1)

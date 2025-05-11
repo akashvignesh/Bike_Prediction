@@ -4,4 +4,3 @@ mlflow
 python-dotenv
 hopsworks
 altair
-python==3.11

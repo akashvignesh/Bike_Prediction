@@ -4,9 +4,12 @@ import mlflow
 from mlflow.tracking import MlflowClient
 from dotenv import load_dotenv
 
+MLFLOW_TRACKING_URI2="https://dagshub.com/s3akash/BIKE_PREDICT.mlflow" 
+MLFLOW_TRACKING_USERNAME="s3akash"
+
 # Load .env vars
 load_dotenv()
-MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI2")
+MLFLOW_TRACKING_URI =   MLFLOW_TRACKING_URI2
 
 # Set MLflow tracking URI
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)

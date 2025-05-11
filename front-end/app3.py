@@ -3,7 +3,14 @@ import pandas as pd
 import os
 import hopsworks
 import altair as alt
+HOPSWORKS_API_KEY="LVmrhMHM87zqUPpc.KSnbzXbEPo0sGiqmKTuKbWtM6dNDJAGRCLURFm8tiJF75xz1ye4kNy6d3zP8mQjR"
+HOPSWORKS_PROJECT_NAME="s3akash" 
 
+FEATURE_GROUP_NAME = "time_series_six_hourly_feature_group_bike"
+FEATURE_GROUP_VERSION = 1
+
+FEATURE_VIEW_NAME = "time_series_six_hourly_feature_view_bike"
+FEATURE_VIEW_VERSION = 1
 # Set page configuration
 st.set_page_config(page_title="Bike Demand Predictions", layout="wide")
 
@@ -24,14 +31,14 @@ from dotenv import load_dotenv
 # Load environment variables and connect to Hopsworks
 load_dotenv()
 project = hopsworks.login(
-    project=os.getenv("HOPSWORKS_PROJECT_NAME"),
-    api_key_value=os.getenv("HOPSWORKS_API_KEY")
+    project= HOPSWORKS_PROJECT_NAME,
+    api_key_value= HOPSWORKS_API_KEY
 )
 fs = project.get_feature_store()
 
 # Load environment variables
-FEATURE_GROUP_NAME = os.getenv("FEATURE_GROUP_NAME")
-FEATURE_GROUP_VERSION = int(os.getenv("FEATURE_GROUP_VERSION", "1"))
+FEATURE_GROUP_NAME =  FEATURE_GROUP_NAME
+FEATURE_GROUP_VERSION = FEATURE_GROUP_VERSION
 
 # Load actual 2024 data
 feature_group = fs.get_feature_group(
@@ -68,11 +75,6 @@ location_ids = sorted(set(actual_df_grouped["location_id"]).union(set(pred_df["l
 
 # Sidebar with image and filter
 st.sidebar.header("Filter Options")
-st.sidebar.image(
-    "https://via.placeholder.com/150?text=Bike+Image",  # Replace with your image file or URL
-    caption="Bike Demand Visualization",
-    use_column_width=True
-)
 selected_loc = st.sidebar.selectbox("Select Location ID", location_ids)
 
 # Filter both datasets

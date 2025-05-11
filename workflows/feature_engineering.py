@@ -194,6 +194,6 @@ feature_group = feature_store.get_or_create_feature_group(
     event_time="pickup_hour"
 )
 df_transformed = df_transformed.drop(columns=["is_weekend"])
-
+logger.info(df_transformed)
 feature_group.insert(df_transformed, write_options={"wait_for_job": False})
 logger.info("✅ Data uploaded to Hopsworks")

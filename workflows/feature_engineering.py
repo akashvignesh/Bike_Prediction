@@ -182,8 +182,8 @@ logger.info(f"Saved transformed data as {transformed_parquet}")
 # Step 7: Upload to Hopsworks
 logger.info("☁️ Uploading to Hopsworks...")
 project = hopsworks.login(
-    project=os.getenv("HOPSWORKS_PROJECT_NAME"),
-    api_key_value=os.getenv("HOPSWORKS_API_KEY")
+    project="s3akash",
+    api_key_value="LVmrhMHM87zqUPpc.KSnbzXbEPo0sGiqmKTuKbWtM6dNDJAGRCLURFm8tiJF75xz1ye4kNy6d3zP8mQjR"
 )
 feature_store = project.get_feature_store()
 feature_group = feature_store.get_or_create_feature_group(
